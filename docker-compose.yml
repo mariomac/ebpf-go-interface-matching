@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  testprog:
+    build:
+      context: .
+      dockerfile: cmd/testprog/Dockerfile
+    image: hatest-testprog
+    environment:
+      LOG_LEVEL: INFO
+
+  instrumenter:
+    build:
+      context: .
+      dockerfile: cmd/instrumenter/Dockerfile
+    image: hatest-instrumenter
+    privileged: true # TODO: replace by individual capabilities
+    pid: "host"
+    environment:
+      EXECUTABLE_NAME: "testprog"
+      LOG_LEVEL: INFO
