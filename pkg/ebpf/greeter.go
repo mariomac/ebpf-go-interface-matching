@@ -81,7 +81,7 @@ func Instrument(offsets *goexec.Offsets) (*InstrumentedGreeter, error) {
 }
 
 func (h *InstrumentedGreeter) Run(eventsChan chan<- uint64) {
-	logger := slog.With("name", "net/http-instrumentor")
+	logger := slog.With("name", "InstrumentedGreeter")
 	for {
 		logger.Debug("starting to read perf buffer")
 		record, err := h.eventsReader.Read()

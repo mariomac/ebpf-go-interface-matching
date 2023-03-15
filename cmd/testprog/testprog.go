@@ -6,6 +6,8 @@ import (
 	"time"
 )
 
+// Toy program used to check the interface type instrumentation.
+
 type Greeter interface {
 	Greet(name string)
 }
@@ -28,6 +30,9 @@ func (e *Japanese) Greet(name string) {
 	fmt.Println("今日は", name)
 }
 
+// DispatchMessage is the function. It receives a Greeter interface and, from eBPF,
+// we want to know which concrete implementation type it is: French, Japanese or English.
+//
 //go:noinline
 func DispatchMessage(greeter Greeter, name string) {
 	greeter.Greet(name)

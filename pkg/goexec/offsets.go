@@ -6,13 +6,16 @@ import "fmt"
 type Offsets struct {
 	FileInfo FileInfo
 	Func     FuncOffsets
-	Field    FieldOffsets
-	Itabs    map[uint64]string
+	Itabs    map[uint64]ITabInfo
+}
+
+type ITabInfo struct {
+	InterfaceName   string
+	ImplementorName string
 }
 
 type FuncOffsets struct {
-	Start   uint64
-	Returns []uint64
+	Start uint64
 }
 
 type FieldOffsets map[string]any
@@ -34,17 +37,6 @@ func InspectOffsets(execFile, funcName string) (Offsets, error) {
 			funcName, execFile, err)
 	}
 
-	// check the offsets of the required fields from the method arguments
-	dwarf, err := execElf.ELF.DWARF()
-	if err != nil {
-		return Offsets{}, fmt.Errorf("searching for DWARF info in file %s: %w", execFile, err)
-	}
-
-	structFieldOffsets, err := structMemberOffsetsFromDwarf(dwarf)
-	if err != nil {
-		return Offsets{}, fmt.Errorf("checking struct members in file %s: %w", execFile, err)
-	}
-
 	implementations, err := findInterfaceImpls(execElf.ELF)
 	if err != nil {
 		return Offsets{}, fmt.Errorf("checking interface implementations in file %s: %w", execFile, err)
@@ -53,7 +45,6 @@ func InspectOffsets(execFile, funcName string) (Offsets, error) {
 	return Offsets{
 		FileInfo: execElf,
 		Func:     funcOffsets,
-		Field:    structFieldOffsets,
 		Itabs:    implementations,
 	}, nil
 }

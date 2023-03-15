@@ -21,12 +21,13 @@ struct {
 
 SEC("uprobe/Greet")
 int uprobe_greet(struct pt_regs *ctx) {
-
-    // TODO: store registers in a map so we can fetch them in the return probe
     bpf_printk("=== uprobe/Greet === ");
+    // Param 1, pointer to the interface implementer itab
+    // Param 2, pointer to the actual interface variable. We will use it when we want to access concrete data.
     void *itab = GO_PARAM1(ctx);
     bpf_printk("itab %lx", itab);
 
+    // We just submit the pointer to the itab, which will be matched with the type name at the user space
     void **submit_itab = bpf_ringbuf_reserve(&greets, sizeof(void*), 0);
     if (!submit_itab) {
         bpf_printk("can't reserve space in the ringbuffer");

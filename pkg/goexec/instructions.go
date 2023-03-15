@@ -70,15 +70,14 @@ func instrumentationPoints(elfF *elf.File, funcName string) (FuncOffsets, error)
 			for _, f := range symTab.Funcs {
 				if f.Name == funcName {
 					log.Debug("found target function")
-					start, returns, err := findFuncOffset(&f, elfF)
+					start, err := findFuncOffset(&f, elfF)
 					if err != nil {
 						return FuncOffsets{}, err
 					}
 					log.Debug("found relevant function for instrumentation", "function", f.Name,
-						"startOffset", start, "returnsOffsets", returns)
+						"startOffset", start)
 					return FuncOffsets{
-						Start:   start,
-						Returns: returns,
+						Start: start,
 					}, nil
 				}
 			}
@@ -87,7 +86,7 @@ func instrumentationPoints(elfF *elf.File, funcName string) (FuncOffsets, error)
 	return FuncOffsets{}, fmt.Errorf("couldn't find function %q", funcName)
 }
 
-func findFuncOffset(f *gosym.Func, elfF *elf.File) (uint64, []uint64, error) {
+func findFuncOffset(f *gosym.Func, elfF *elf.File) (uint64, error) {
 	for _, prog := range elfF.Progs {
 		if prog.Type != elf.PT_LOAD || (prog.Flags&elf.PF_X) == 0 {
 			continue
@@ -101,18 +100,14 @@ func findFuncOffset(f *gosym.Func, elfF *elf.File) (uint64, []uint64, error) {
 			data := make([]byte, funcLen)
 			_, err := prog.ReadAt(data, int64(f.Value-prog.Vaddr))
 			if err != nil {
-				return 0, nil, fmt.Errorf("finding function return: %w", err)
+				return 0, fmt.Errorf("finding function return: %w", err)
 			}
 
-			returns, err := findReturnOffssets(off, data)
-			if err != nil {
-				return 0, nil, fmt.Errorf("finding function return: %w", err)
-			}
 			// TODO: not return on first match but append all the offsets of all the programs
-			return off, returns, nil
+			return off, nil
 		}
 
 	}
 
-	return 0, nil, fmt.Errorf("prog not found")
+	return 0, fmt.Errorf("prog not found")
 }
